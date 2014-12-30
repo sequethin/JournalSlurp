@@ -1,4 +1,4 @@
-package processbuilder;
+package com.beyondnormal.journalslurp;
 
 import java.io.*;
 import java.util.List;
@@ -9,18 +9,22 @@ import java.util.List;
  * Creative Commons Attribution-ShareAlike 3.0 Unported License;
  * see http://creativecommons.org/licenses/by-sa/3.0/ for more
  * details.
+ *
+ * Thanks to Alvin for this great post: http://alvinalexander.com/java/java-exec-processbuilder-process-1
+ *
+ * Changes made by Michael Hernandez:
+ *  - change package to my own
+ *  - remove sudo-related STDIN code and comments
+ *  - change formatting
+ *  - see commit history of repo for details
  */
-public class SystemCommandExecutor
-{
+public class SystemCommandExecutor {
     private List<String> commandInformation;
-    private String adminPassword;
     private ThreadedStreamHandler inputStreamHandler;
     private ThreadedStreamHandler errorStreamHandler;
 
     /**
-     * You'll need access to the command's STDIN and STDOUT to work with the command
-     * interactively.
-     * (such as when invoking the 'sudo' command, and it prompts you for a password).
+     * You'll need access to the command's STDIN and STDOUT to work with the command * interactively.
      */
     private OutputStream commandStandardOutput;
     private InputStream commandStandardInputStream;
@@ -43,85 +47,45 @@ public class SystemCommandExecutor
      * SystemCommandExecutor commandExecutor = new SystemCommandExecutor(commands);
      * commandExecutor.executeCommand();
      *
-     * Note: I've removed the other constructor that was here to support executing
-     *       the sudo command. I'll add that back in when I get the sudo command
-     *       working to the point where it won't hang when the given password is
-     *       wrong.
-     *
      * @param commandInformation The command you want to run.
      */
-    public SystemCommandExecutor(final List<String> commandInformation)
-    {
-        if (commandInformation==null) throw new NullPointerException("The commandInformation is required.");
+    public SystemCommandExecutor(final List<String> commandInformation) {
+        if (commandInformation == null) {
+            throw new NullPointerException("The commandInformation is required.");
+        }
         this.commandInformation = commandInformation;
-        this.adminPassword = null;
     }
 
-    /**
-     * Use this constructor when you want to run the given command with sudo and a supplied
-     * password.
-     *
-     * @param commandInformation The command you want to run.
-     * @param adminPassword The admin or root password for the current system.
-     */
-    public SystemCommandExecutor(final List<String> commandInformation, final String adminPassword)
-    {
-        // TODO is this the right exception to throw?
-        if (commandInformation==null || adminPassword==null) throw new IllegalStateException("The commandInformation and password are both required.");
-        this.commandInformation = commandInformation;
-        this.adminPassword = adminPassword;
-    }
-
-    public int executeCommand()
-            throws IOException, InterruptedException
-    {
+    public int executeCommand() throws IOException, InterruptedException {
         int exitValue = -99;
 
-        try
-        {
+        try {
             processBuilder = new ProcessBuilder(commandInformation);
             process = processBuilder.start();
 
-            commandStandardOutput = process.getOutputStream();
+            // These need to run as java threads to get the standard output and error from the command.
+            // The inputStreamHandler gets a reference to our stdOutput in case we need to write something to it.
+            inputStreamHandler = new ThreadedStreamHandler(process.getInputStream(), process.getOutputStream());
+            errorStreamHandler = new ThreadedStreamHandler(process.getErrorStream());
 
-            // i'm currently doing these on a separate line here in case i need to set them to null
-            // to get the threads to stop.
-            // see http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
-            commandStandardInputStream = process.getInputStream();
-            commandStandardErrorStream = process.getErrorStream();
-
-            // these need to run as java threads to get the standard output and error from the command.
-            // the inputstream handler gets a reference to our stdOutput in case we need to write
-            // something to it, such as with the sudo command
-            inputStreamHandler = new ThreadedStreamHandler(commandStandardInputStream, commandStandardOutput, adminPassword);
-            errorStreamHandler = new ThreadedStreamHandler(commandStandardErrorStream);
-
-            // TODO the inputStreamHandler has a nasty side-effect of hanging if the given password is wrong; fix it
             inputStreamHandler.start();
             errorStreamHandler.start();
 
-            // TODO a better way to do this?
             exitValue = process.waitFor();
 
-            // TODO a better way to do this?
             inputStreamHandler.interrupt();
             errorStreamHandler.interrupt();
+
             inputStreamHandler.join();
             errorStreamHandler.join();
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             // TODO deal with this here, or just throw it?
             throw e;
-        }
-        catch (InterruptedException e)
-        {
+        } catch (InterruptedException e) {
             // generated by process.waitFor() call
             // TODO deal with this here, or just throw it?
             throw e;
-        }
-        finally
-        {
+        } finally {
             return exitValue;
         }
     }
@@ -129,51 +93,34 @@ public class SystemCommandExecutor
     /**
      * Get the standard output (stdout) from the command you just exec'd.
      */
-    public StringBuilder getStandardOutputFromCommand()
-    {
+    public StringBuilder getStandardOutputFromCommand() {
         return inputStreamHandler.getOutputBuffer();
     }
 
     /**
-     * Get the standard error (stderr) from the command you just exec'd.
+     * Get the standard error (STDERR) from the command you just exec'd.
      */
-    public StringBuilder getStandardErrorFromCommand()
-    {
+    public StringBuilder getStandardErrorFromCommand() {
         return errorStreamHandler.getOutputBuffer();
     }
 
-
-    public InputStream getCommandStandardInputStream()
-    {
+    public InputStream getCommandStandardInputStream() {
         return commandStandardInputStream;
     }
 
-    public OutputStream getCommandStandardOutput()
-    {
+    public OutputStream getCommandStandardOutput() {
         return commandStandardOutput;
     }
 
-    public InputStream getCommandStandardErrorStream()
-    {
+    public InputStream getCommandStandardErrorStream() {
         return commandStandardErrorStream;
     }
 
-    public ProcessBuilder getProcessBuilder()
-    {
+    public ProcessBuilder getProcessBuilder() {
         return processBuilder;
     }
 
-    public Process getProcess()
-    {
+    public Process getProcess() {
         return process;
     }
-
 }
-
-
-
-
-
-
-
-

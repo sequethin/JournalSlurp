@@ -1,4 +1,4 @@
-package processbuilder;
+package com.beyondnormal.journalslurp;
 
 import java.io.*;
 
@@ -8,118 +8,82 @@ import java.io.*;
  * Creative Commons Attribution-ShareAlike 3.0 Unported License;
  * see http://creativecommons.org/licenses/by-sa/3.0/ for more
  * details.
+ *
+ * Thanks to Alvin for this great post: http://alvinalexander.com/java/java-exec-processbuilder-process-1
+ *
+ * Changes made by Michael Hernandez:
+ *  - change package to my own
+ *  - remove sudo-related STDIN code and comments
+ *  - change formatting
+ *  - see commit history of repo for details
  */
-class ThreadedStreamHandler extends Thread
-{
+class ThreadedStreamHandler extends Thread {
     InputStream inputStream;
-    String adminPassword;
     OutputStream outputStream;
     PrintWriter printWriter;
     StringBuilder outputBuffer = new StringBuilder();
-    private boolean sudoIsRequested = false;
 
     /**
-     * A simple constructor for when the sudo command is not necessary.
-     * This constructor will just run the command you provide, without
-     * running sudo before the command, and without expecting a password.
+     * This constructor will just run the command you provide
      *
-     * @param inputStream
-     * @param streamType
+     * @param inputStream an InputStream for working with STDIN / STDOUT
      */
-    ThreadedStreamHandler(InputStream inputStream)
-    {
+    ThreadedStreamHandler(InputStream inputStream) {
         this.inputStream = inputStream;
     }
 
     /**
-     * Use this constructor when you want to invoke the 'sudo' command.
+     * Use this constructor when you want to provide input for STDIN
      * The outputStream must not be null. If it is, you'll regret it. :)
      *
-     * TODO this currently hangs if the admin password given for the sudo command is wrong.
-     *
      * @param inputStream
-     * @param streamType
      * @param outputStream
-     * @param adminPassword
      */
-    ThreadedStreamHandler(InputStream inputStream, OutputStream outputStream, String adminPassword)
-    {
+    ThreadedStreamHandler(InputStream inputStream, OutputStream outputStream) {
         this.inputStream = inputStream;
         this.outputStream = outputStream;
+        // To write to STDIN use write to the outputStream during run
+        // e.g. printWriter.println("Some Input"); printWriter.flush();
         this.printWriter = new PrintWriter(outputStream);
-        this.adminPassword = adminPassword;
-        this.sudoIsRequested = true;
     }
 
-    public void run()
-    {
-        // on mac os x 10.5.x, when i run a 'sudo' command, i need to write
-        // the admin password out immediately; that's why this code is
-        // here.
-        if (sudoIsRequested)
-        {
-            //doSleep(500);
-            printWriter.println(adminPassword);
-            printWriter.flush();
-        }
+    public void run() {
+        // To write to STDIN use write to the outputStream during run
+        // e.g. printWriter.println("Some Input"); printWriter.flush();
 
+        // TODO: we need to make sure that if there was input supplied for STDIN that we add it before the rest of run()
         BufferedReader bufferedReader = null;
-        try
-        {
+        try {
             bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-            String line = null;
-            while ((line = bufferedReader.readLine()) != null)
-            {
-                outputBuffer.append(line + "\n");
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                outputBuffer.append(line).append("\n");
             }
-        }
-        catch (IOException ioe)
-        {
+        } catch (IOException ioe) {
             // TODO handle this better
             ioe.printStackTrace();
-        }
-        catch (Throwable t)
-        {
+        } catch (Throwable t) {
             // TODO handle this better
             t.printStackTrace();
-        }
-        finally
-        {
-            try
-            {
+        } finally {
+            try {
                 bufferedReader.close();
-            }
-            catch (IOException e)
-            {
+            } catch (IOException e) {
                 // ignore this one
             }
         }
     }
 
-    private void doSleep(long millis)
-    {
-        try
-        {
+    // TODO if we don't plan on sleeping, we don't need this at all
+    private void doSleep(long millis) {
+        try {
             Thread.sleep(millis);
-        }
-        catch (InterruptedException e)
-        {
+        } catch (InterruptedException e) {
             // ignore
         }
     }
 
-    public StringBuilder getOutputBuffer()
-    {
+    public StringBuilder getOutputBuffer() {
         return outputBuffer;
     }
-
 }
-
-
-
-
-
-
-
-
-
