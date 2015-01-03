@@ -36,8 +36,8 @@ class ThreadedStreamHandler extends Thread {
      * Use this constructor when you want to provide input for STDIN
      * The outputStream must not be null. If it is, you'll regret it. :)
      *
-     * @param inputStream
-     * @param outputStream
+     * @param inputStream for reading STDOUT
+     * @param outputStream for writing to STDIN
      */
     ThreadedStreamHandler(InputStream inputStream, OutputStream outputStream) {
         this.inputStream = inputStream;
@@ -67,11 +67,17 @@ class ThreadedStreamHandler extends Thread {
             t.printStackTrace();
         } finally {
             try {
-                bufferedReader.close();
+                if (bufferedReader != null) {
+                    bufferedReader.close();
+                }
             } catch (IOException e) {
                 // ignore this one
             }
         }
+    }
+
+    public StringBuilder getOutputBuffer() {
+        return outputBuffer;
     }
 
     // TODO if we don't plan on sleeping, we don't need this at all
@@ -83,7 +89,4 @@ class ThreadedStreamHandler extends Thread {
         }
     }
 
-    public StringBuilder getOutputBuffer() {
-        return outputBuffer;
-    }
 }

@@ -1,16 +1,13 @@
 package com.beyondnormal.journalslurp;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.powermock.api.mockito.PowerMockito.whenNew;
 
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-
-import java.io.IOException;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest( { DayOneCliWrapper.class } )
@@ -32,25 +29,21 @@ public class DayOneCliWrapperTest {
     }
 
     @Test
-    public void expectedExitValueComesFromProcess() throws IOException, DayOneCliWrapperNoCommandRunException {
-        // This sucks because it's assuming knowledge of how we execute the commands
-        // Luckily, we do have knowledge of how we execute the commands ;)
-        int expectedResult = 0;
-        mockStatic(Runtime.class);
-        Runtime mockRuntime = mock(Runtime.class);
-        Process mockProcess = mock(Process.class);
-        when(mockProcess.exitValue()).thenReturn(expectedResult);
-        when(mockRuntime.exec("echo 'foo'")).thenReturn(mockProcess);
-        Mockito.when(Runtime.getRuntime()).thenReturn(mockRuntime);
-
-        wrapper.runCommand();
-        assertEquals(expectedResult, wrapper.getExitCode());
+    public void attemptToExecuteWithoutSettingPath() throws DayOneCliWrapperNoBinarySetException {
+        thrown.expect(DayOneCliWrapperNoBinarySetException.class);
+        // Note: call to addEntry without path set
+        wrapper.addEntry();
     }
 
     @Test
-    public void setPathToDayOneCliBinary() {
-        String expectedPath = "/usr/local/bin/dayone";
-        wrapper.setPathToDayOne(expectedPath);
-        assertEquals(expectedPath, wrapper.getPathToDayOne());
+    public void wrapperThrowsExceptionIfYouTryToSetAnInvalidPath() throws Exception {
+        // Set up stubbing and injection of validator
+        DayOneCliBinaryValidator mockValidator = mock(DayOneCliBinaryValidator.class);
+        when(mockValidator.validate()).thenReturn(false);
+        whenNew(DayOneCliBinaryValidator.class).withAnyArguments().thenReturn(mockValidator);
+
+        thrown.expect(DayOneCliBinaryValidatorInvalidBinaryException.class);
+        wrapper.setPathToDayOne("path entered here doesn't matter for this test");
     }
+
 }
