@@ -9,6 +9,8 @@ import org.junit.runner.RunWith;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.io.IOException;
+
 @RunWith(PowerMockRunner.class)
 @PrepareForTest( { DayOneCliWrapper.class } )
 public class DayOneCliWrapperTest {
@@ -29,10 +31,12 @@ public class DayOneCliWrapperTest {
     }
 
     @Test
-    public void attemptToExecuteWithoutSettingPath() throws DayOneCliWrapperNoBinarySetException {
+    public void attemptToExecuteWithoutSettingPath() throws DayOneCliWrapperNoBinarySetException, IOException, InterruptedException {
         thrown.expect(DayOneCliWrapperNoBinarySetException.class);
         // Note: call to addEntry without path set
-        wrapper.addEntry();
+        StringBuilder entryText = new StringBuilder();
+        entryText.append("whatever");
+        wrapper.addEntry(entryText);
     }
 
     @Test

@@ -33,8 +33,6 @@ public class SystemCommandExecutorTest {
 
     private SystemCommandExecutor executor;
     private List<String> echoCommandInformation;
-    private ProcessBuilder mockProcessBuilder;
-    private Process mockProcess;
     private StringBuilder mockOutputBuffer;
     private StringBuilder mockErrorBuffer;
     private int mockExitValue;
@@ -48,8 +46,8 @@ public class SystemCommandExecutorTest {
 
         // The SystemCommandExecutor uses these system classes to get the work done
         // We need to use PowerMockito for certain final system classes
-        mockProcessBuilder = PowerMockito.mock(ProcessBuilder.class);
-        mockProcess = Mockito.mock(Process.class);
+        ProcessBuilder mockProcessBuilder = PowerMockito.mock(ProcessBuilder.class);
+        Process mockProcess = Mockito.mock(Process.class);
 
         when(mockProcessBuilder.start()).thenReturn(mockProcess);
         whenNew(ProcessBuilder.class).withArguments(echoCommandInformation).thenReturn(mockProcessBuilder);
@@ -58,8 +56,6 @@ public class SystemCommandExecutorTest {
         InputStream mockInputStream = PowerMockito.mock(InputStream.class);
         when(mockProcess.getInputStream()).thenReturn(mockInputStream);
 
-        OutputStream mockOutputStream = PowerMockito.mock(OutputStream.class);
-        when(mockProcess.getOutputStream()).thenReturn(mockOutputStream);
         when(mockProcess.waitFor()).thenReturn(EXPECTED_EXIT_VALUE);
 
         InputStream mockErrorStream = PowerMockito.mock(InputStream.class);
@@ -72,7 +68,7 @@ public class SystemCommandExecutorTest {
 
         when(mockInputStreamHandler.getOutputBuffer()).thenReturn(mockOutputBuffer);
         whenNew(ThreadedStreamHandler.class)
-                .withArguments(mockInputStream, mockOutputStream).thenReturn(mockInputStreamHandler);
+                .withArguments(mockInputStream).thenReturn(mockInputStreamHandler);
 
         ThreadedStreamHandler mockErrorStreamHandler = mock(ThreadedStreamHandler.class);
         when(mockErrorStreamHandler.getOutputBuffer()).thenReturn(mockErrorBuffer);
@@ -80,7 +76,7 @@ public class SystemCommandExecutorTest {
                 .withArguments(mockErrorStream).thenReturn(mockErrorStreamHandler);
 
         whenNew(ThreadedStreamHandler.class)
-                .withArguments(mockInputStream, mockOutputStream).thenReturn(mockInputStreamHandler);
+                .withArguments(mockInputStream).thenReturn(mockInputStreamHandler);
 
         when(mockErrorStreamHandler.getOutputBuffer()).thenReturn(mockErrorBuffer);
         whenNew(ThreadedStreamHandler.class)

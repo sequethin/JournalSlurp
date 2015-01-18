@@ -102,7 +102,8 @@ public class DayOneCliBinaryValidatorTest {
                 .append("Commands:").append("\n")
                 .append("   new    Adds a new entry using text from stdin").append("\n");
         SystemCommandExecutor mockExecutor = mock(SystemCommandExecutor.class);
-        when(mockExecutor.executeCommand()).thenReturn(0);
+        // -h is expected to return 1
+        when(mockExecutor.executeCommand()).thenReturn(1);
         when(mockExecutor.getStandardOutputFromCommand()).thenReturn(commandOutput);
 
         whenNew(SystemCommandExecutor.class).withAnyArguments().thenReturn(mockExecutor);

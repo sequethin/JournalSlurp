@@ -26,13 +26,6 @@ public class SystemCommandExecutor {
     private ThreadedStreamHandler errorStreamHandler;
 
     /**
-     * You'll need access to the command's STDIN and STDOUT to work with the command * interactively.
-     */
-    private OutputStream commandStandardOutput;
-    private InputStream commandStandardInputStream;
-    private InputStream commandStandardErrorStream;
-
-    /**
      * Give the consumer access to these objects as well.
      */
     private ProcessBuilder processBuilder;
@@ -59,21 +52,50 @@ public class SystemCommandExecutor {
     }
 
     public int executeCommand() throws IOException, InterruptedException {
-        int exitValue = EXIT_CODE_DEFAULT;
-
         processBuilder = new ProcessBuilder(commandInformation);
 
         process = processBuilder.start();
 
         // These need to run as java threads to get the standard output and error from the command.
         // The inputStreamHandler gets a reference to our stdOutput in case we need to write something to it.
-        inputStreamHandler = new ThreadedStreamHandler(process.getInputStream(), process.getOutputStream());
+        inputStreamHandler = new ThreadedStreamHandler(process.getInputStream());
         errorStreamHandler = new ThreadedStreamHandler(process.getErrorStream());
 
         inputStreamHandler.start();
         errorStreamHandler.start();
 
-        exitValue = process.waitFor();
+        int exitValue = process.waitFor();
+
+        inputStreamHandler.interrupt();
+        errorStreamHandler.interrupt();
+
+        inputStreamHandler.join();
+        errorStreamHandler.join();
+        return exitValue;
+    }
+
+    public int executeCommand(StringBuilder inputStringBuilder) throws IOException, InterruptedException {
+        processBuilder = new ProcessBuilder(commandInformation);
+
+        // Create a temp file to hold the entry. It's much easier than dealing with pipes
+        File temp = File.createTempFile("dayonePre", "dayoneSuf");
+        BufferedWriter bw = new BufferedWriter(new FileWriter(temp));
+        bw.write(inputStringBuilder.toString());
+        bw.close();
+        processBuilder.redirectInput(temp);
+
+        process = processBuilder.start();
+
+        // These need to run as java threads to get the standard output and error from the command.
+        inputStreamHandler = new ThreadedStreamHandler(process.getInputStream());
+        errorStreamHandler = new ThreadedStreamHandler(process.getErrorStream());
+
+        inputStreamHandler.setCommandInput(inputStringBuilder);
+
+        inputStreamHandler.start();
+        errorStreamHandler.start();
+
+        int exitValue = process.waitFor();
 
         inputStreamHandler.interrupt();
         errorStreamHandler.interrupt();

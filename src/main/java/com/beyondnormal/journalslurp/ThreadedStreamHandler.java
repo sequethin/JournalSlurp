@@ -19,9 +19,8 @@ import java.io.*;
  */
 class ThreadedStreamHandler extends Thread {
     InputStream inputStream;
-    OutputStream outputStream;
-    PrintWriter printWriter;
     StringBuilder outputBuffer = new StringBuilder();
+    StringBuilder commandInput;
 
     /**
      * This constructor will just run the command you provide
@@ -32,26 +31,11 @@ class ThreadedStreamHandler extends Thread {
         this.inputStream = inputStream;
     }
 
-    /**
-     * Use this constructor when you want to provide input for STDIN
-     * The outputStream must not be null. If it is, you'll regret it. :)
-     *
-     * @param inputStream for reading STDOUT
-     * @param outputStream for writing to STDIN
-     */
-    ThreadedStreamHandler(InputStream inputStream, OutputStream outputStream) {
-        this.inputStream = inputStream;
-        this.outputStream = outputStream;
-        // To write to STDIN use write to the outputStream during run
-        // e.g. printWriter.println("Some Input"); printWriter.flush();
-        this.printWriter = new PrintWriter(outputStream);
+    public void setCommandInput(StringBuilder commandForInput) {
+        this.commandInput = commandForInput;
     }
 
     public void run() {
-        // To write to STDIN use write to the outputStream during run
-        // e.g. printWriter.println("Some Input"); printWriter.flush();
-
-        // TODO: we need to make sure that if there was input supplied for STDIN that we add it before the rest of run()
         BufferedReader bufferedReader = null;
         try {
             bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
@@ -79,14 +63,4 @@ class ThreadedStreamHandler extends Thread {
     public StringBuilder getOutputBuffer() {
         return outputBuffer;
     }
-
-    // TODO if we don't plan on sleeping, we don't need this at all
-    private void doSleep(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException e) {
-            // ignore
-        }
-    }
-
 }

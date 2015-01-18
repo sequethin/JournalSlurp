@@ -36,7 +36,8 @@ public class DayOneCliBinaryValidator {
             try {
                 int returnValue = executor.executeCommand();
                 Matcher matcher = VALID_COMMAND_REGEX.matcher(executor.getStandardOutputFromCommand().toString());
-                if (returnValue == 0 && matcher.find()) {
+                // -h returns 1
+                if (returnValue == 1 && matcher.find()) {
                     isValid = true;
                 }
             } catch (IOException e) {
