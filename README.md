@@ -1,6 +1,8 @@
 # JournalSlurp
 Retrieving Evernote entries and adding them to DayOne, the long way
 
+[![Build Status](https://travis-ci.org/sequethin/JournalSlurp.svg?branch=master)](https://travis-ci.org/sequethin/JournalSlurp)
+
 The goal of this project, aside from trying out some stuff in Java, is to allow me to write journal entries in
 Evernote while I'm on the go and have them auto-imported into my DayOne journal. This is because I love DayOne,
 but there's no DayOne for Android.
