@@ -10,3 +10,5 @@ but there's no DayOne for Android.
 This is something I could have achieved in a few lines of Python, but I needed some practice with Java.
 There are no doubt lots of mistakes and bad ideas going on in here, but give me a break, it's my first
 Java project!
+
+Busy working on other stuff - planning to pick this up again (soon... ish)
